@@ -2,6 +2,7 @@ package com.example.floatingdoubletap
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
+import android.view.accessibility.AccessibilityEvent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -34,6 +35,11 @@ class DoubleTapAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         registerReceiver(receiver, IntentFilter(ACTION_DO_TAPS))
         Log.d("DTService", "Accessibility service connected")
+    }
+
+    // Required override - intentionally empty because we don't need events for this service
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // No-op
     }
 
     override fun onInterrupt() {}

@@ -1,1 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="18dp">
 
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start floating button" />
+
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stop floating button" />
+
+        <ToggleButton
+            android:id="@+id/toggle_lock"
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textOn="Overlay locked"
+            android:textOff="Overlay unlocked" />
+
+        <TextView
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Double-tap configuration:" />
+
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="Tap count:" />
+
+            <EditText
+                android:id="@+id/et_tap_count"
+                android:layout_marginStart="8dp"
+                android:inputType="number"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:hint="2" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="Interval (ms):" />
+
+            <EditText
+                android:id="@+id/et_tap_interval"
+                android:layout_marginStart="8dp"
+                android:inputType="number"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:hint="80" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notes: Grant 'Display over other apps' (overlay) and enable Accessibility service for double-tap injection." />
+    </LinearLayout>
+</ScrollView>

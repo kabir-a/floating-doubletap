@@ -47,8 +47,8 @@ class FloatingService : Service() {
         }
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Floating DoubleTap")
-            .setContentText("Tap the button to send double-tap")
+            .setContentTitle("FloatingDoubleTap")
+            .setContentText("Tap the floating button to trigger double-tap")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .build()
 
@@ -81,7 +81,7 @@ class FloatingService : Service() {
 
         windowManager.addView(floatingView, params)
 
-        // touch + drag + click detection
+        // touch handling
         var startX = 0
         var startY = 0
         var initialX = 0
@@ -113,7 +113,6 @@ class FloatingService : Service() {
                     val dx = event.rawX.toInt() - startX
                     val dy = event.rawY.toInt() - startY
 
-                    // treat as click
                     if (kotlin.math.abs(dx) < 15 && kotlin.math.abs(dy) < 15) {
                         performClickAtCurrentLocation(params)
                     }
@@ -135,114 +134,8 @@ class FloatingService : Service() {
             val cx = screenPos[0] + view.width / 2
             val cy = screenPos[1] + view.height / 2
 
-            // send broadcast → AccessibilityService handles gesture
+            // send broadcast → handled by AccessibilityService
             val intent = Intent(DoubleTapAccessibilityService.ACTION_DO_TAPS)
-            intent.putExtra(DoubleTapAccessibilityService.EXTRA_X, cx)
-            intent.putExtra(DoubleTapAccessibilityService.EXTRA_Y, cy)
-            sendBroadcast(intent)
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        floatingView?.let { windowManager.removeView(it) }
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-}            .setContentTitle("FloatingDoubleTap")
-            .setContentText("Tap the floating button to trigger double-tap")
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .build()
-
-        startForeground(1, notification)
-    }
-
-    private fun createOverlay() {
-        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        floatingView = inflater.inflate(R.layout.floating_button_layout, null)
-        val imageView = floatingView!!.findViewById<ImageView>(R.id.fab)
-
-        val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            @Suppress("DEPRECATION")
-            WindowManager.LayoutParams.TYPE_PHONE
-        }
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        )
-
-        params.gravity = Gravity.TOP or Gravity.START
-        params.x = 100
-        params.y = 300
-
-        windowManager.addView(floatingView, params)
-
-        var lastX = 0
-        var lastY = 0
-        var startX = 0
-        var startY = 0
-
-        imageView.setOnTouchListener { _, event ->
-            val locked = prefs.getBoolean(MainActivity.PREF_OVERLAY_LOCKED, false)
-
-            if (locked) {
-                if (event.action == MotionEvent.ACTION_UP) {
-                    performClickAtCurrentLocation(params)
-                }
-                return@setOnTouchListener true
-            }
-
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    startX = event.rawX.toInt()
-                    startY = event.rawY.toInt()
-                    lastX = params.x
-                    lastY = params.y
-                    true
-                }
-
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = event.rawX.toInt() - startX
-                    val dy = event.rawY.toInt() - startY
-                    params.x = lastX + dx
-                    params.y = lastY + dy
-                    windowManager.updateViewLayout(floatingView, params)
-                    true
-                }
-
-                MotionEvent.ACTION_UP -> {
-                    val dx = event.rawX.toInt() - startX
-                    val dy = event.rawY.toInt() - startY
-
-                    if (kotlin.math.abs(dx) < 10 && kotlin.math.abs(dy) < 10) {
-                        performClickAtCurrentLocation(params)
-                    }
-                    true
-                }
-
-                else -> false
-            }
-        }
-    }
-
-    private fun performClickAtCurrentLocation(params: WindowManager.LayoutParams) {
-        val view = floatingView ?: return
-
-        view.post {
-            val location = IntArray(2)
-            view.getLocationOnScreen(location)
-            val cx = location[0] + view.width / 2
-            val cy = location[1] + view.height / 2
-
-            // Explicit broadcast → REQUIRED for Android 8+
-            val intent = Intent(DoubleTapAccessibilityService.ACTION_DO_TAPS)
-            intent.setClass(this, DoubleTapAccessibilityService::class.java)
             intent.putExtra(DoubleTapAccessibilityService.EXTRA_X, cx)
             intent.putExtra(DoubleTapAccessibilityService.EXTRA_Y, cy)
 

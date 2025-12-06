@@ -9,7 +9,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.preference.PreferenceManager
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -17,6 +19,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 
 class FloatingService : Service() {
@@ -24,6 +27,7 @@ class FloatingService : Service() {
     private lateinit var windowManager: WindowManager
     private var floatingView: View? = null
     private lateinit var prefs: SharedPreferences
+    private var isClickInProgress = false
 
     override fun onCreate() {
         super.onCreate()
@@ -47,8 +51,8 @@ class FloatingService : Service() {
         }
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("FloatingDoubleTap")
-            .setContentText("Tap the floating button to trigger double-tap")
+            .setContentTitle("Floating DoubleTap")
+            .setContentText("Tap the button to send double-tap")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .build()
 
@@ -58,30 +62,29 @@ class FloatingService : Service() {
     private fun createOverlay() {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         floatingView = inflater.inflate(R.layout.floating_button_layout, null)
-
         val imageView = floatingView!!.findViewById<ImageView>(R.id.fab)
 
-        val layoutType =
+        val layoutFlag =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
+                @Suppress("DEPRECATION")
                 WindowManager.LayoutParams.TYPE_PHONE
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
-            layoutType,
+            layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
 
         params.gravity = Gravity.TOP or Gravity.START
-        params.x = 200
-        params.y = 400
+        params.x = 100
+        params.y = 300
 
         windowManager.addView(floatingView, params)
 
-        // touch handling
         var startX = 0
         var startY = 0
         var initialX = 0
@@ -91,7 +94,6 @@ class FloatingService : Service() {
             val locked = prefs.getBoolean(MainActivity.PREF_OVERLAY_LOCKED, false)
 
             when (event.action) {
-
                 MotionEvent.ACTION_DOWN -> {
                     startX = event.rawX.toInt()
                     startY = event.rawY.toInt()
@@ -125,21 +127,28 @@ class FloatingService : Service() {
     }
 
     private fun performClickAtCurrentLocation(params: WindowManager.LayoutParams) {
+        if (isClickInProgress) return
+        isClickInProgress = true
+
         val view = floatingView ?: return
-
         view.post {
-            val screenPos = IntArray(2)
-            view.getLocationOnScreen(screenPos)
+            val location = IntArray(2)
+            view.getLocationOnScreen(location)
+            val cx = location[0] + view.width / 2
+            val cy = location[1] + view.height / 2
 
-            val cx = screenPos[0] + view.width / 2
-            val cy = screenPos[1] + view.height / 2
+            // Debug Toast
+            Toast.makeText(this, "Broadcast sent at ($cx,$cy)", Toast.LENGTH_SHORT).show()
 
-            // send broadcast → handled by AccessibilityService
             val intent = Intent(DoubleTapAccessibilityService.ACTION_DO_TAPS)
             intent.putExtra(DoubleTapAccessibilityService.EXTRA_X, cx)
             intent.putExtra(DoubleTapAccessibilityService.EXTRA_Y, cy)
-
             sendBroadcast(intent)
+
+            // Reset flag after short delay
+            Handler(Looper.getMainLooper()).postDelayed({
+                isClickInProgress = false
+            }, 300)
         }
     }
 
